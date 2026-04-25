@@ -220,5 +220,5 @@ inherits = "release"
 debug = true
 
 [patch.crates-io]
-rusqlite = { git = "https://github.com/caqui-sh/rusqlite.git", rev = "3f5caba" }
-libsqlite3-sys = { git = "https://github.com/caqui-sh/rusqlite.git", rev = "3f5caba" }
+rusqlite = { git = "https://github.com/caqui-sh/rusqlite.git", rev = "c6ab8b7" }
+libsqlite3-sys = { git = "https://github.com/caqui-sh/rusqlite.git", rev = "c6ab8b7" }
