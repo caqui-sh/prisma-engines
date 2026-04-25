@@ -29,76 +29,71 @@ impl TryFrom<&str> for SqliteParams {
 
         let path_parts: Vec<&str> = path.split('?').collect();
         let path_str = path_parts[0];
-        let path = Path::new(path_str);
 
-        if path.is_dir() {
-            Err(Error::builder(ErrorKind::DatabaseUrlIsInvalid(path.to_str().unwrap().to_string())).build())
-        } else {
-            let mut connection_limit = None;
-            let mut socket_timeout = None;
-            let mut max_connection_lifetime = None;
-            let mut max_idle_connection_lifetime = None;
+        let mut connection_limit = None;
+        let mut socket_timeout = None;
+        let mut max_connection_lifetime = None;
+        let mut max_idle_connection_lifetime = None;
 
-            if path_parts.len() > 1 {
-                let params = path_parts.last().unwrap().split('&').map(|kv| {
-                    let splitted: Vec<&str> = kv.split('=').collect();
-                    (splitted[0], splitted[1])
-                });
+        if path_parts.len() > 1 {
+            let params = path_parts.last().unwrap().split('&').map(|kv| {
+                let splitted: Vec<&str> = kv.split('=').collect();
+                (splitted[0], splitted[1])
+            });
 
-                for (k, v) in params {
-                    match k {
-                        "connection_limit" => {
-                            let as_int: usize = v
-                                .parse()
-                                .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
+            for (k, v) in params {
+                match k {
+                    "connection_limit" => {
+                        let as_int: usize = v
+                            .parse()
+                            .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
 
-                            connection_limit = Some(as_int);
+                        connection_limit = Some(as_int);
+                    }
+                    "socket_timeout" => {
+                        let as_int = v
+                            .parse()
+                            .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
+
+                        socket_timeout = Some(Duration::from_secs(as_int));
+                    }
+                    "max_connection_lifetime" => {
+                        let as_int = v
+                            .parse()
+                            .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
+
+                        if as_int == 0 {
+                            max_connection_lifetime = None;
+                        } else {
+                            max_connection_lifetime = Some(Duration::from_secs(as_int));
                         }
-                        "socket_timeout" => {
-                            let as_int = v
-                                .parse()
-                                .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
+                    }
+                    "max_idle_connection_lifetime" => {
+                        let as_int = v
+                            .parse()
+                            .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
 
-                            socket_timeout = Some(Duration::from_secs(as_int));
+                        if as_int == 0 {
+                            max_idle_connection_lifetime = None;
+                        } else {
+                            max_idle_connection_lifetime = Some(Duration::from_secs(as_int));
                         }
-                        "max_connection_lifetime" => {
-                            let as_int = v
-                                .parse()
-                                .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
-
-                            if as_int == 0 {
-                                max_connection_lifetime = None;
-                            } else {
-                                max_connection_lifetime = Some(Duration::from_secs(as_int));
-                            }
-                        }
-                        "max_idle_connection_lifetime" => {
-                            let as_int = v
-                                .parse()
-                                .map_err(|_| Error::builder(ErrorKind::InvalidConnectionArguments).build())?;
-
-                            if as_int == 0 {
-                                max_idle_connection_lifetime = None;
-                            } else {
-                                max_idle_connection_lifetime = Some(Duration::from_secs(as_int));
-                            }
-                        }
-                        _ => {
-                            tracing::trace!(message = "Discarding connection string param", param = k);
-                        }
-                    };
-                }
+                    }
+                    _ => {
+                        tracing::trace!(message = "Discarding connection string param", param = k);
+                    }
+                };
             }
-
-            Ok(Self {
-                connection_limit,
-                file_path: path_str.to_owned(),
-                db_name: super::DEFAULT_SQLITE_DATABASE.to_owned(),
-                socket_timeout,
-                max_connection_lifetime,
-                max_idle_connection_lifetime,
-            })
         }
+
+        Ok(Self {
+            connection_limit,
+            file_path: path_str.to_owned(),
+            db_name: super::DEFAULT_SQLITE_DATABASE.to_owned(),
+            socket_timeout,
+            max_connection_lifetime,
+            max_idle_connection_lifetime,
+        })
     }
 }
 

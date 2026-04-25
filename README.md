@@ -313,3 +313,21 @@ git push --set-upstream origin integration/sql-nested-transactions --force
 ## Security
 
 If you have a security issue to report, please contact us at [security@prisma.io](mailto:security@prisma.io?subject=[GitHub]%20Prisma%202%20Security%20Report%20Engines)
+
+## Custom SQLite Fork (git-sqlite-vfs)
+
+This workspace is configured to use a custom fork of `rusqlite` that implements a Git-based Virtual File System (VFS).
+
+### Applied Patches
+To support the `git-sqlite-vfs` fork, which stores SQLite databases as Git repositories (directories) rather than single files, the following patches were applied:
+
+1.  **Dependency Override:** The root `Cargo.toml` uses `[patch.crates-io]` to point `rusqlite` and `libsqlite3-sys` to the fork at `https://github.com/caqui-sh/rusqlite.git` (branch `fork/git-sqlite-vfs-0.32.1`).
+2.  **Quaint Parser:** Modified `quaint/src/connector/sqlite/params.rs` to remove the strict `is_dir()` check. This allows Prisma to connect to SQLite databases even when they are represented as directories on the filesystem.
+3.  **Schema Engine:** Updated `drop_database` in `schema-engine/connectors/sql-schema-connector/src/flavour/sqlite/connector/native/mod.rs` to handle both file and directory deletions (using `remove_dir_all` where appropriate).
+
+### Building
+When building natively, ensure you use the `vendored-openssl` feature if you do not have OpenSSL development headers installed on your host system:
+
+```bash
+cargo build -p schema-engine-cli --release --features vendored-openssl
+```

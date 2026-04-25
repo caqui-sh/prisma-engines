@@ -223,9 +223,23 @@ pub async fn create_database(state: &State) -> ConnectorResult<String> {
 
 pub async fn drop_database(state: &State) -> ConnectorResult<()> {
     let params = state.get_unwrapped_params();
-    let file_path = &params.file_path;
-    std::fs::remove_file(file_path)
-        .map_err(|err| ConnectorError::from_msg(format!("Failed to delete SQLite database at `{file_path}`.\n{err}")))
+    let file_path = std::path::Path::new(&params.file_path);
+
+    if file_path.is_dir() {
+        std::fs::remove_dir_all(file_path).map_err(|err| {
+            ConnectorError::from_msg(format!(
+                "Failed to delete SQLite database directory at `{}`.\n{err}",
+                file_path.display()
+            ))
+        })
+    } else {
+        std::fs::remove_file(file_path).map_err(|err| {
+            ConnectorError::from_msg(format!(
+                "Failed to delete SQLite database at `{}`.\n{err}",
+                file_path.display()
+            ))
+        })
+    }
 }
 
 pub async fn ensure_connection_validity(state: &mut State) -> ConnectorResult<()> {
