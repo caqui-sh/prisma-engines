@@ -2329,7 +2329,7 @@ dependencies = [
 [[package]]
 name = "libsqlite3-sys"
 version = "0.30.1"
-source = "git+https://github.com/caqui-sh/rusqlite.git?branch=fork%2Fgit-sqlite-vfs-0.32.1#632010ef73b49e5b9d06c0607ac6edcce909061e"
+source = "git+https://github.com/caqui-sh/rusqlite.git?rev=3f5caba#3f5cabaaa8a17bb1266cd1993a71b5c9c7394f4c"
 dependencies = [
  "cc",
  "pkg-config",
@@ -4215,7 +4215,7 @@ dependencies = [
 [[package]]
 name = "rusqlite"
 version = "0.32.1"
-source = "git+https://github.com/caqui-sh/rusqlite.git?branch=fork%2Fgit-sqlite-vfs-0.32.1#632010ef73b49e5b9d06c0607ac6edcce909061e"
+source = "git+https://github.com/caqui-sh/rusqlite.git?rev=3f5caba#3f5cabaaa8a17bb1266cd1993a71b5c9c7394f4c"
 dependencies = [
  "bitflags 2.9.1",
  "chrono",
