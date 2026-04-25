@@ -1,13 +1,14 @@
 #![cfg_attr(target_arch = "wasm32", allow(dead_code))]
 
 use crate::error::{Error, ErrorKind};
-use std::{convert::TryFrom, path::Path, time::Duration};
+use std::{convert::TryFrom, time::Duration};
 
 /// Wraps a connection url and exposes the parsing logic used by Quaint,
 /// including default values.
 #[derive(Debug)]
 pub struct SqliteParams {
     pub connection_limit: Option<usize>,
+    pub vfs: Option<String>,
     /// This is not a `PathBuf` because we need to `ATTACH` the database to the path, and this can
     /// only be done with UTF-8 paths.
     pub file_path: String,
@@ -31,6 +32,7 @@ impl TryFrom<&str> for SqliteParams {
         let path_str = path_parts[0];
 
         let mut connection_limit = None;
+        let mut vfs = None;
         let mut socket_timeout = None;
         let mut max_connection_lifetime = None;
         let mut max_idle_connection_lifetime = None;
@@ -43,6 +45,9 @@ impl TryFrom<&str> for SqliteParams {
 
             for (k, v) in params {
                 match k {
+                    "vfs" => {
+                        vfs = Some(v.to_string());
+                    }
                     "connection_limit" => {
                         let as_int: usize = v
                             .parse()
@@ -88,6 +93,7 @@ impl TryFrom<&str> for SqliteParams {
 
         Ok(Self {
             connection_limit,
+            vfs,
             file_path: path_str.to_owned(),
             db_name: super::DEFAULT_SQLITE_DATABASE.to_owned(),
             socket_timeout,
@@ -120,5 +126,21 @@ mod tests {
         let path = "dev.db";
         let params = SqliteParams::try_from(path).unwrap();
         assert_eq!(params.file_path, "dev.db");
+    }
+
+    #[test]
+    fn sqlite_params_from_str_should_parse_vfs_parameter() {
+        let path = "file:dev.db?vfs=git";
+        let params = SqliteParams::try_from(path).unwrap();
+        assert_eq!(params.file_path, "dev.db");
+        assert_eq!(params.vfs, Some("git".to_string()));
+
+        let path = "file:dev.db?vfs=unix";
+        let params = SqliteParams::try_from(path).unwrap();
+        assert_eq!(params.vfs, Some("unix".to_string()));
+
+        let path = "file:dev.db";
+        let params = SqliteParams::try_from(path).unwrap();
+        assert_eq!(params.vfs, None);
     }
 }

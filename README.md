@@ -324,6 +324,7 @@ To support the `git-sqlite-vfs` fork, which stores SQLite databases as Git repos
 1.  **Dependency Override:** The root `Cargo.toml` uses `[patch.crates-io]` to point `rusqlite` and `libsqlite3-sys` to the fork at `https://github.com/caqui-sh/rusqlite.git` (branch `fork/git-sqlite-vfs-0.32.1`).
 2.  **Quaint Parser:** Modified `quaint/src/connector/sqlite/params.rs` to remove the strict `is_dir()` check. This allows Prisma to connect to SQLite databases even when they are represented as directories on the filesystem.
 3.  **Schema Engine:** Updated `drop_database` in `schema-engine/connectors/sql-schema-connector/src/flavour/sqlite/connector/native/mod.rs` to handle both file and directory deletions (using `remove_dir_all` where appropriate).
+4.  **VFS Parameter Support:** Modified `quaint` to extract the `vfs` query parameter from the connection string and pass it explicitly to `rusqlite` via `open_with_flags_and_vfs`. This allows users to explicitly select the VFS for different databases (e.g., `?vfs=unix` for the shadow database and `?vfs=git` for the main database).
 
 ### Building
 When building natively, ensure you use the `vendored-openssl` feature if you do not have OpenSSL development headers installed on your host system:

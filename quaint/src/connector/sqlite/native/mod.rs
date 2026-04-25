@@ -48,7 +48,9 @@ impl TryFrom<&str> for Sqlite {
         //
         // `rusqlite` uses `SQLITE_OPEN_NO_MUTEX` by default, which means that the connection uses the "multi-thread" threading mode.
 
-        let conn = rusqlite::Connection::open_with_flags(
+        let vfs_name = params.vfs.as_deref().unwrap_or("");
+
+        let conn = rusqlite::Connection::open_with_flags_and_vfs(
             file_path.as_str(),
             // The database is opened for reading and writing if possible, or reading only if the file is write protected by the operating system.
             // The database is created if it does not already exist.
@@ -58,6 +60,7 @@ impl TryFrom<&str> for Sqlite {
                 | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX
                 // The filename can be interpreted as a URI if this flag is set.
                 | rusqlite::OpenFlags::SQLITE_OPEN_URI,
+            vfs_name,
         )?;
 
         if let Some(timeout) = params.socket_timeout {
