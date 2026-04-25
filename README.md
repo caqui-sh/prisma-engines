@@ -331,3 +331,18 @@ When building natively, ensure you use the `vendored-openssl` feature if you do 
 ```bash
 cargo build -p schema-engine-cli --release --features vendored-openssl
 ```
+
+### Automated Releases
+
+GitHub Actions is configured to automatically build and distribute binaries for:
+- Linux (x86_64 and aarch64)
+- macOS (Apple Silicon/aarch64)
+
+To trigger a new automated release:
+1. Ensure your changes are committed and pushed.
+2. Create and push a tag starting with `fork-` (e.g., `fork-5.14.0`):
+   ```bash
+   git tag fork-5.14.0
+   git push origin fork-5.14.0
+   ```
+3. The binaries will be attached as assets to the resulting GitHub Release.
