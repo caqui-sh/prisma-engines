@@ -17,6 +17,7 @@ pub type State = crate::flavour::State<Params, Connection>;
 pub struct Params {
     connector_params: ConnectorParams,
     file_path: String,
+    vfs: Option<String>,
 }
 
 impl Params {
@@ -25,13 +26,14 @@ impl Params {
             validate_connection_infos_do_not_match(&connector_params.connection_string, shadow_db_url)?;
         }
 
-        let quaint::connector::SqliteParams { file_path, .. } =
+        let quaint::connector::SqliteParams { file_path, vfs, .. } =
             quaint::connector::SqliteParams::try_from(connector_params.connection_string.as_str())
                 .map_err(ConnectorError::url_parse_error)?;
 
         Ok(Self {
             connector_params,
             file_path,
+            vfs,
         })
     }
 
@@ -39,6 +41,7 @@ impl Params {
         Self {
             connector_params: ConnectorParams::new(":memory:".to_owned(), preview_features, None),
             file_path: ":memory:".to_string(),
+            vfs: None,
         }
     }
 }
@@ -47,9 +50,18 @@ pub struct Connection(Mutex<rusqlite::Connection>);
 
 impl Connection {
     pub fn new(params: &Params) -> ConnectorResult<Self> {
-        Ok(Self(Mutex::new(
-            rusqlite::Connection::open(&params.file_path).map_err(convert_error)?,
-        )))
+        let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+            | rusqlite::OpenFlags::SQLITE_OPEN_CREATE
+            | rusqlite::OpenFlags::SQLITE_OPEN_URI;
+
+        let conn = match params.vfs.as_deref() {
+            Some(vfs_name) if !vfs_name.is_empty() => {
+                rusqlite::Connection::open_with_flags_and_vfs(&params.file_path, flags, vfs_name)
+            }
+            _ => rusqlite::Connection::open_with_flags(&params.file_path, flags),
+        };
+
+        Ok(Self(Mutex::new(conn.map_err(convert_error)?)))
     }
 
     pub fn new_inmem() -> ConnectorResult<Self> {
